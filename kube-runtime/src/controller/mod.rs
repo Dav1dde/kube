@@ -584,6 +584,32 @@ where
         self
     }
 
+
+    // pub fn reconcile_on(
+    //     mut self,
+    //     trigger: impl Stream<Item = Result<ObjectRef<K>, watcher::Error>> + Send + 'static,
+    // ) -> Self {
+    //     self.trigger_selector.push(
+    //         trigger
+    //             .map_ok(move |obj| ReconcileRequest {
+    //                 obj_ref: obj,
+    //                 reason: ReconcileReason::Unknown,
+    //             })
+    //             .boxed(),
+    //     );
+    //     self
+    // }
+
+    #[must_use]
+    pub fn owns_stream<Child: Resource<DynamicType = ()> + Send + 'static>(
+        mut self,
+        trigger: impl Stream<Item = Result<Child, watcher::Error>> + Send + 'static,
+    ) -> Self {
+        let child_watcher = trigger_owners(trigger, self.dyntype.clone(), Default::default());
+        self.trigger_selector.push(child_watcher.boxed());
+        self
+    }
+
     /// Specify `Watched` object which `K` has a custom relation to and should be watched
     ///
     /// To define the `Watched` relation with `K`, you **must** define a custom relation mapper, which,
